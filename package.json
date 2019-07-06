@@ -3,8 +3,9 @@
   "version": "1.0.0",
   "description": "Working together is better then working alone",
   "main": "dist/index.js",
+  "types" : "dist/index.d.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "echo \"Building\" && tsc && echo \"Completed\""
   },
   "repository": {
     "type": "git",
