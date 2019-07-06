@@ -27,5 +27,9 @@
     "ts-node": "^8.3.0",
     "typescript": "^3.5.2"
   },
-  "dependencies": {}
+  "dependencies": {
+    "moment": "^2.24.0",
+    "mysql2": "^1.6.5",
+    "sequelize": "^5.9.3"
+  }
 }
