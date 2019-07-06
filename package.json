@@ -1,0 +1,19 @@
+{
+  "name": "job-process",
+  "version": "1.0.0",
+  "description": "Working together is better then working alone",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GabrieleNunez/job-process.git"
+  },
+  "author": "Gabriele M. Nunez",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/GabrieleNunez/job-process/issues"
+  },
+  "homepage": "https://github.com/GabrieleNunez/job-process#readme"
+}
