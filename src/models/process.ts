@@ -1,4 +1,5 @@
 import ModelFactory from '../core/factory';
+import Models from '../core/models';
 import * as Sequelize from 'sequelize';
 
 /**
@@ -49,7 +50,7 @@ export abstract class ProcessFactory extends ModelFactory {
     public static init(sequelize: Sequelize.Sequelize): void {
         Process.init(ProcessAttributesDefinition, {
             sequelize: sequelize,
-            modelName: 'process',
+            modelName: Models.Process,
             tableName: 'processes',
             timestamps: false,
         });

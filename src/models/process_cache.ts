@@ -1,4 +1,5 @@
 import ModelFactory from '../core/factory';
+import Models from '../core/models';
 import { Process } from './process';
 import { ProcessJob } from './process_job';
 import * as Sequelize from 'sequelize';
@@ -68,7 +69,7 @@ export class ProcessCacheFactory extends ModelFactory {
     public static init(sequelize: Sequelize.Sequelize): void {
         ProcessCache.init(ProcessCacheAttributeDefinition, {
             sequelize: sequelize,
-            modelName: 'process_cache',
+            modelName: Models.ProcessCache,
             tableName: 'process_cache',
             timestamps: false,
         });

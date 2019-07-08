@@ -1,4 +1,5 @@
 import ModelFactory from '../core/factory';
+import Models from '../core/models';
 import { Process } from './process';
 import { ProcessJob } from './process_job';
 import { ProcessLogTypes } from '../core/process_log_types';
@@ -62,7 +63,7 @@ export abstract class ProcessJobLogs extends ModelFactory {
     public static init(sequelize: Sequelize.Sequelize): void {
         ProcessJobLog.init(ProcessJobLogAttributesDefinition, {
             sequelize: sequelize,
-            modelName: 'job',
+            modelName: Models.ProcessJobLog,
             tableName: 'process_job_logs',
             timestamps: false,
         });
