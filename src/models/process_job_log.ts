@@ -59,7 +59,7 @@ export const ProcessJobLogAttributesDefinition: Sequelize.ModelAttributes = {
     },
 };
 
-export abstract class ProcessJobLogs extends ModelFactory {
+export abstract class ProcessJobLogFactory extends ModelFactory {
     public static init(sequelize: Sequelize.Sequelize): void {
         ProcessJobLog.init(ProcessJobLogAttributesDefinition, {
             sequelize: sequelize,
@@ -69,3 +69,5 @@ export abstract class ProcessJobLogs extends ModelFactory {
         });
     }
 }
+
+export default ProcessJobLogFactory;
