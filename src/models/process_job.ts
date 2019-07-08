@@ -10,7 +10,7 @@ export class ProcessJob extends Sequelize.Model {
     public updatedAt!: number;
 
     /** The process that this job belongs to */
-    public parentProcess?: Process;
+    public readonly parentProcess?: Process;
 
     /** Any associations to other tables that we want to keep track of or provide functionality for */
     public static associations: {
@@ -50,7 +50,7 @@ export abstract class ProcessJobFactory extends ModelFactory {
     public static init(sequelize: Sequelize.Sequelize): void {
         ProcessJob.init(ProcessJobAttributesDefinition, {
             sequelize: sequelize,
-            modelName: 'job',
+            modelName: 'process_job',
             tableName: 'process_jobs',
             timestamps: false,
         });

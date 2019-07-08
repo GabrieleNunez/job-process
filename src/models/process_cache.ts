@@ -1,27 +1,28 @@
 import ModelFactory from '../core/factory';
 import { Process } from './process';
 import { ProcessJob } from './process_job';
-import { ProcessLogTypes } from '../core/process_log_types';
 import * as Sequelize from 'sequelize';
 
-export class ProcessJobLog extends Sequelize.Model {
+export class ProcessCache extends Sequelize.Model {
     public id!: number;
     public process!: number;
     public job!: number;
-    public type!: string;
-    public createdAt: number;
-    public updatedAt: number;
+    public machine!: number;
+    public key!: string;
+    public value!: string;
+    public createdAt!: number;
+    public updatedAt!: number;
 
     public readonly parentProcess?: Process;
     public readonly parentJob?: ProcessJob;
 
     public static associations: {
-        parentProcess: Sequelize.Association<Process, ProcessJobLog>;
-        parentJob: Sequelize.Association<ProcessJob, ProcessJobLog>;
+        parentProcess: Sequelize.Association<Process, ProcessCache>;
+        parentJob: Sequelize.Association<Process, ProcessCache>;
     };
 }
 
-export const ProcessJobLogAttributesDefinition: Sequelize.ModelAttributes = {
+export const ProcessCacheAttributeDefinition: Sequelize.ModelAttributes = {
     id: {
         type: Sequelize.DataTypes.INTEGER,
         primaryKey: true,
@@ -37,12 +38,17 @@ export const ProcessJobLogAttributesDefinition: Sequelize.ModelAttributes = {
         allowNull: false,
         defaultValue: 0,
     },
-    type: {
+    machine: {
         type: Sequelize.DataTypes.STRING,
         allowNull: false,
-        defaultValue: ProcessLogTypes.Generic,
+        defaultValue: '',
     },
-    message: {
+    key: {
+        type: Sequelize.DataTypes.STRING,
+        allowNull: false,
+        defaultValue: '',
+    },
+    value: {
         type: Sequelize.DataTypes.TEXT,
         allowNull: false,
     },
@@ -58,13 +64,15 @@ export const ProcessJobLogAttributesDefinition: Sequelize.ModelAttributes = {
     },
 };
 
-export abstract class ProcessJobLogs extends ModelFactory {
+export class ProcessCacheFactory extends ModelFactory {
     public static init(sequelize: Sequelize.Sequelize): void {
-        ProcessJobLog.init(ProcessJobLogAttributesDefinition, {
+        ProcessCache.init(ProcessCacheAttributeDefinition, {
             sequelize: sequelize,
-            modelName: 'job',
-            tableName: 'process_job_logs',
+            modelName: 'process_cache',
+            tableName: 'process_cache',
             timestamps: false,
         });
     }
 }
+
+export default ProcessCacheFactory;
