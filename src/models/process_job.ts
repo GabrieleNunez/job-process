@@ -1,5 +1,8 @@
 import ModelFactory from '../core/factory';
 import { Process } from './process';
+import { ProcessJobLog } from './process_job_log';
+import { ProcessCache } from './process_cache';
+
 import * as Sequelize from 'sequelize';
 
 export class ProcessJob extends Sequelize.Model {
@@ -11,10 +14,14 @@ export class ProcessJob extends Sequelize.Model {
 
     /** The process that this job belongs to */
     public readonly parentProcess?: Process;
+    public readonly logs?: ProcessJobLog[];
+    public readonly caches?: ProcessCache[];
 
     /** Any associations to other tables that we want to keep track of or provide functionality for */
     public static associations: {
         parentProcess: Sequelize.Association<Process, ProcessJob>;
+        logs: Sequelize.Association<ProcessJobLog, ProcessJob>;
+        caches: Sequelize.Association<ProcessCache, ProcessJob>;
     };
 }
 
@@ -53,6 +60,26 @@ export abstract class ProcessJobFactory extends ModelFactory {
             modelName: 'process_job',
             tableName: 'process_jobs',
             timestamps: false,
+        });
+    }
+
+    public static associate(): void {
+        ProcessJob.belongsTo(Process, {
+            targetKey: 'id',
+            foreignKey: 'process',
+            as: 'parentProcess',
+        });
+
+        ProcessJob.hasMany(ProcessJobLog, {
+            sourceKey: 'id',
+            foreignKey: 'job',
+            as: 'logs',
+        });
+
+        ProcessJob.hasMany(ProcessCache, {
+            sourceKey: 'id',
+            foreignKey: 'job',
+            as: 'caches',
         });
     }
 }
