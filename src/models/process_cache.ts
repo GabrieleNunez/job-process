@@ -74,6 +74,20 @@ export class ProcessCacheFactory extends ModelFactory {
             timestamps: false,
         });
     }
+
+    public static associate(): void {
+        ProcessCache.belongsTo(Process, {
+            targetKey: 'id',
+            foreignKey: 'process',
+            as: 'parentProcess',
+        });
+
+        ProcessCache.belongsTo(ProcessJob, {
+            targetKey: 'id',
+            foreignKey: 'job',
+            as: 'parentJob',
+        });
+    }
 }
 
 export default ProcessCacheFactory;
