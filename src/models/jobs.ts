@@ -1,29 +1,33 @@
 import ModelFactory from '../core/factory';
+import { Process } from './process';
 import * as Sequelize from 'sequelize';
 
-/**
- * The model that directly relates to the processes table
- */
-export class Process extends Sequelize.Model {
+export class Job extends Sequelize.Model {
     public id!: number;
-    public name!: number;
+    public process!: number;
+    public name!: string;
     public createdAt!: number;
     public updatedAt!: number;
 
-    /**
-     * All associations that should be made to the process table
-     */
-    public static associations: {};
+    /** The process that this job belongs to */
+    public parentProcess?: Process;
+
+    /** Any associations to other tables that we want to keep track of or provide functionality for */
+    public static associations: {
+        parentProcess: Sequelize.Association<Process, Job>;
+    };
 }
 
-/**
- * Column definitions for the table processes
- */
-export const ProcessAttributesDefinition: Sequelize.ModelAttributes = {
+export const JobAttributesDefinition: Sequelize.ModelAttributes = {
     id: {
         type: Sequelize.DataTypes.INTEGER,
         primaryKey: true,
         allowNull: false,
+    },
+    process: {
+        type: Sequelize.DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 0,
     },
     name: {
         type: Sequelize.DataTypes.STRING,
@@ -42,18 +46,13 @@ export const ProcessAttributesDefinition: Sequelize.ModelAttributes = {
     },
 };
 
-/**
- * Factory that will simplfy initiating the process and making any additional associations
- */
-export abstract class ProcessFactory extends ModelFactory {
+export abstract class JobFactory extends ModelFactory {
     public static init(sequelize: Sequelize.Sequelize): void {
-        Process.init(ProcessAttributesDefinition, {
+        Job.init(JobAttributesDefinition, {
             sequelize: sequelize,
-            modelName: 'process',
-            tableName: 'processes',
+            modelName: 'job',
+            tableName: 'process_jobs',
             timestamps: false,
         });
     }
 }
-
-export default ProcessFactory;
