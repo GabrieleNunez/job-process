@@ -68,6 +68,20 @@ export abstract class ProcessJobLogFactory extends ModelFactory {
             timestamps: false,
         });
     }
+
+    public static associate(): void {
+        ProcessJobLog.belongsTo(Process, {
+            targetKey: 'id',
+            foreignKey: 'process',
+            as: 'parentProcess',
+        });
+
+        ProcessJobLog.belongsTo(ProcessJob, {
+            targetKey: 'id',
+            foreignKey: 'job',
+            as: 'parentJob',
+        });
+    }
 }
 
 export default ProcessJobLogFactory;
