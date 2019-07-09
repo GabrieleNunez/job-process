@@ -1,6 +1,6 @@
 {
   "name": "job-process",
-  "version": "1.0.0",
+  "version": "0.5.0",
   "description": "Working together is better then working alone",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

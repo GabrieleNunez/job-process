@@ -236,6 +236,29 @@ export class Machine {
             },
         );
     }
+
+    /**
+     * Gets the entire cache that is tied to this machine, job and process
+     * @param process The process we are targeting
+     * @param job The job we are targeting
+     */
+    public getFullCache(process: ProcessModel, job: ProcessJobModel): Promise<ProcessCacheModel[]> {
+        return new Promise(
+            async (resolve): Promise<void> => {
+                let results: ProcessCacheModel[] = [];
+
+                results = await this.database.model<typeof ProcessCacheModel>(Models.ProcessCache).findAll({
+                    where: {
+                        process: process.id,
+                        job: job.id,
+                        machine: this.machine,
+                    },
+                });
+
+                resolve(results);
+            },
+        );
+    }
 }
 
 export default Machine;

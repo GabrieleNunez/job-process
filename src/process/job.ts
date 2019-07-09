@@ -5,7 +5,6 @@ import { ProcessLogTypes } from '../core/process_log_types';
 import { Process as ProcessModel, Process } from '../models/process';
 import { ProcessJob as ProcessJobModel } from '../models/process_job';
 import { ProcessCache as ProcessCacheModel } from '../models/process_cache';
-import { runInThisContext } from 'vm';
 
 export class Job {
     protected processManager: ProcessManager;
@@ -16,7 +15,7 @@ export class Job {
     protected process: Process | null;
 
     /**
-     * Construct our basic job class. Make sure to call job.load()
+     * Construct our basic job class. Make sure to call job.load() or things will break
      * @param database The database driver we want to use
      * @param processName The name of the process we are trying to utilze
      * @param jobName The job we are trying to target
@@ -91,5 +90,9 @@ export class Job {
      */
     public hasCache(): Promise<boolean> {
         return this.machine.hasCache(this.process as ProcessModel, this.processJob as ProcessJobModel);
+    }
+
+    public getFullCache(): Promise<ProcessCacheModel[]> {
+        return this.machine.getFullCache(this.process as ProcessModel, this.processJob as ProcessJobModel);
     }
 }
