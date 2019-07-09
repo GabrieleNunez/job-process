@@ -208,6 +208,7 @@ export class ProcessManager {
      * Pull all logs related to the process
      * @param process The process we want to pull the logs from
      * @param logType An optional parameter. If its included, you'll only receive the specific type of log
+     * @returns A promise with all the log models upon resolve. Logs are returned in ASCENDING order using createdAt as a reference.
      */
     public getProcessLogs(process: ProcessModel, logType?: ProcessLogTypes): Promise<ProcessJobLogModel[]> {
         return new Promise(
@@ -222,6 +223,7 @@ export class ProcessManager {
                             [Sequelize.Op.in]: logType ? [logType] : [Object.values(ProcessLogTypes)],
                         },
                     },
+                    order: [['createdAt', 'ASC']],
                 });
 
                 resolve(results);
@@ -229,6 +231,12 @@ export class ProcessManager {
         );
     }
 
+    /**
+     * Gets all logs related to a specific job
+     * @param job The job that we want to pull logs on
+     * @param logType An optional parameter. If its included you'll only receive the specific type of log in your results
+     * @returns A promise with all the log models upon resolve. Logs are returned in ASCENDING order using createdAt as a reference.
+     */
     public getJobLogs(job: ProcessJobModel, logType?: ProcessLogTypes): Promise<ProcessJobLogModel[]> {
         return new Promise(
             async (resolve): Promise<void> => {
@@ -242,6 +250,7 @@ export class ProcessManager {
                             [Sequelize.Op.in]: logType ? [logType] : [Object.values(ProcessLogTypes)],
                         },
                     },
+                    order: [['createdAt', 'ASC']],
                 });
 
                 resolve(results);
