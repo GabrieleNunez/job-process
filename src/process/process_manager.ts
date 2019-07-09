@@ -8,12 +8,27 @@ import * as moment from 'moment';
 import * as Sequelize from 'sequelize';
 
 /**
+ * An advanced way to filter through the resultsof the process job log initially
+ */
+export interface ProcessJobLogFilters {
+    offset?: number;
+    limit?: number;
+    type?: string;
+}
+
+/**
+ * A set of filters that are default.
+ */
+export const PROCESS_JOB_LOG_FILTERS_DEFAULT: ProcessJobLogFilters = {};
+
+/**
  * Process Manager is the main class that should be used when dealing with the process cache
  */
 export class ProcessManager {
     protected processList: { [processName: string]: ProcessModel };
     protected jobList: { [processName: string]: { [jobName: string]: ProcessJobModel } };
-    protected caches: { [processName: string]: { [jobName: string]: ProcessCacheModel } };
+    protected caches: { [processId: number]: { [jobId: number]: { [cacheId: number]: ProcessCacheModel } } };
+    protected logs: { [processId: number]: { [jobId: number]: { [logId: number]: ProcessJobLogModel } } };
     protected database: Database;
 
     /** Construct our process manager. This does not do any database loading. Please use .load to load in information from the database */
@@ -22,6 +37,7 @@ export class ProcessManager {
         this.caches = {};
         this.database = database;
         this.jobList = {};
+        this.logs = {};
     }
 
     /**
@@ -75,19 +91,71 @@ export class ProcessManager {
             this.processList[process.name] = process;
         }
 
-        if (typeof this.caches[process.name] == 'undefined') {
-            this.caches[process.name] = {};
+        if (typeof this.caches[process.id] == 'undefined') {
+            this.caches[process.id] = {};
         }
 
         if (typeof this.jobList[process.name] == 'undefined') {
             this.jobList[process.name] = {};
         }
+
+        if (typeof this.logs[process.id] == 'undefined') {
+            this.logs[process.id] = {};
+        }
     }
 
+    /**
+     * Makes sure the job can be cached if possible
+     * @param process The process that this job is tied too
+     * @param job The job we intend to cache
+     */
     private cacheJob(process: ProcessModel, job: ProcessJobModel): void {
         // make sure that our process is already cached, if it is then all good!
         this.cacheProcess(process);
         this.jobList[process.name][job.name] = job;
+
+        if (typeof this.caches[process.id][job.id] == 'undefined') {
+            this.caches[process.id][job.id] = {};
+        }
+
+        if (typeof this.logs[process.id] == 'undefined') {
+            this.logs[process.id] = {};
+        }
+
+        if (typeof this.logs[process.id][job.id] == 'undefined') {
+            this.logs[process.id][job.id] = {};
+        }
+    }
+
+    /**
+     * Logs the specific log to retrieve later on
+     * @param log the log we are intending to cache
+     */
+    private cacheLog(log: ProcessJobLogModel): void {
+        if (typeof this.logs[log.process] == 'undefined') {
+            this.logs[log.process] = {};
+        }
+
+        if (typeof this.logs[log.process][log.job] == 'undefined') {
+            this.logs[log.process][log.job] = {};
+        }
+        this.logs[log.process][log.job][log.id] = log;
+    }
+
+    /**
+     * Caches into memory what was stored into the database. This is good for freqeuent accesses
+     * @param cacheData The data we want to cache into memory
+     */
+    private cacheProcessCache(cacheData: ProcessCacheModel): void {
+        if (typeof this.caches[cacheData.process] == 'undefined') {
+            this.caches[cacheData.process] = {};
+        }
+
+        if (typeof this.caches[cacheData.process][cacheData.job] == 'undefined') {
+            this.caches[cacheData.process][cacheData.job] = {};
+        }
+
+        this.caches[cacheData.process][cacheData.job][cacheData.id] = cacheData;
     }
 
     /**
@@ -207,10 +275,13 @@ export class ProcessManager {
     /**
      * Pull all logs related to the process
      * @param process The process we want to pull the logs from
-     * @param logType An optional parameter. If its included, you'll only receive the specific type of log
+     * @param filters An optional parameter. If its included you'll be able to have more advanced filtering capabilities
      * @returns A promise with all the log models upon resolve. Logs are returned in ASCENDING order using createdAt as a reference.
      */
-    public getProcessLogs(process: ProcessModel, logType?: ProcessLogTypes): Promise<ProcessJobLogModel[]> {
+    public getProcessLogs(
+        process: ProcessModel,
+        filters: ProcessJobLogFilters = PROCESS_JOB_LOG_FILTERS_DEFAULT,
+    ): Promise<ProcessJobLogModel[]> {
         return new Promise(
             async (resolve): Promise<void> => {
                 this.cacheProcess(process);
@@ -220,9 +291,11 @@ export class ProcessManager {
                     where: {
                         process: process.id,
                         type: {
-                            [Sequelize.Op.in]: logType ? [logType] : [Object.values(ProcessLogTypes)],
+                            [Sequelize.Op.in]: filters.type ? [filters.type] : [Object.values(ProcessLogTypes)],
                         },
                     },
+                    limit: filters.limit,
+                    offset: filters.offset,
                     order: [['createdAt', 'ASC']],
                 });
 
@@ -234,10 +307,13 @@ export class ProcessManager {
     /**
      * Gets all logs related to a specific job
      * @param job The job that we want to pull logs on
-     * @param logType An optional parameter. If its included you'll only receive the specific type of log in your results
+     * @param filters An optional parameter. If its included you'll be able to have more advanced filtering capabilities
      * @returns A promise with all the log models upon resolve. Logs are returned in ASCENDING order using createdAt as a reference.
      */
-    public getJobLogs(job: ProcessJobModel, logType?: ProcessLogTypes): Promise<ProcessJobLogModel[]> {
+    public getJobLogs(
+        job: ProcessJobModel,
+        filters: ProcessJobLogFilters = PROCESS_JOB_LOG_FILTERS_DEFAULT,
+    ): Promise<ProcessJobLogModel[]> {
         return new Promise(
             async (resolve): Promise<void> => {
                 let results: ProcessJobLogModel[] = [];
@@ -247,9 +323,11 @@ export class ProcessManager {
                         process: job.process,
                         job: job.id,
                         type: {
-                            [Sequelize.Op.in]: logType ? [logType] : [Object.values(ProcessLogTypes)],
+                            [Sequelize.Op.in]: filters.type ? [filters.type] : [Object.values(ProcessLogTypes)],
                         },
                     },
+                    limit: filters.limit,
+                    offset: filters.offset,
                     order: [['createdAt', 'ASC']],
                 });
 
