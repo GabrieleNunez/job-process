@@ -4,10 +4,7 @@ import ProcessManager from './process_manager';
 import Machine from './machine';
 import { ProcessLogTypes } from '../core/process_log_types';
 import { Process as ProcessModel, Process } from '../models/process';
-import { ProcessJob as ProcessJobModel } from '../models/process_job';
-import { ProcessJobLog as ProcessJobLogModel } from '../models/process_job_log';
-import * as moment from 'moment';
-import * as Sequelize from 'sequelize';
+import { ProcessJob as ProcessJobModel, ProcessJob } from '../models/process_job';
 
 export class Job {
     protected processManager: ProcessManager;
@@ -33,6 +30,9 @@ export class Job {
         this.processJob = null;
     }
 
+    /**
+     * Load in any specific data to our process that we should know about
+     */
     public load(): Promise<void> {
         return new Promise(
             async (resolve): Promise<void> => {
@@ -44,5 +44,14 @@ export class Job {
                 resolve();
             },
         );
+    }
+
+    /**
+     * Log whatever message/value we want. This is functionally a wrapper that calls machine.createLog
+     * @param message The message we are trying to log
+     * @param logType The kind of log we want to issue
+     */
+    public createLog(message: string, logType: ProcessLogTypes = ProcessLogTypes.Generic): Promise<void> {
+        return this.machine.createLog(this.process as ProcessModel, this.processJob as ProcessJob, message, logType);
     }
 }
