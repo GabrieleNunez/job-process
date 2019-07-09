@@ -298,7 +298,6 @@ export class ProcessManager {
                     offset: filters.offset,
                     order: [['createdAt', 'ASC']],
                 });
-
                 resolve(results);
             },
         );
