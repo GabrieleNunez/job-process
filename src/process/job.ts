@@ -54,4 +54,13 @@ export class Job {
     public createLog(message: string, logType: ProcessLogTypes = ProcessLogTypes.Generic): Promise<void> {
         return this.machine.createLog(this.process as ProcessModel, this.processJob as ProcessJob, message, logType);
     }
+
+    /**
+     * Create a cache value that is tied to this job and machine. This is functionally just a wrapper
+     * @param key The key where we want to store it. KEYS ARE NOT UNIQUE, multiple values the share the same relationship should share the same key
+     * @param value  The value that we are trying to store it.
+     */
+    public createCache(key: string, value: string): Promise<void> {
+        return this.machine.createCache(this.process as ProcessModel, this.processJob as ProcessJobModel, key, value);
+    }
 }
