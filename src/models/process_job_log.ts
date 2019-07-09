@@ -9,6 +9,7 @@ export class ProcessJobLog extends Sequelize.Model {
     public id!: number;
     public process!: number;
     public job!: number;
+    public machine!: string;
     public type!: string;
     public createdAt: number;
     public updatedAt: number;
@@ -37,6 +38,11 @@ export const ProcessJobLogAttributesDefinition: Sequelize.ModelAttributes = {
         type: Sequelize.DataTypes.INTEGER,
         allowNull: false,
         defaultValue: 0,
+    },
+    machine: {
+        type: Sequelize.DataTypes.STRING,
+        allowNull: false,
+        defaultValue: 'unknown',
     },
     type: {
         type: Sequelize.DataTypes.STRING,

@@ -1,11 +1,11 @@
 import Database from '../drivers/database';
-import Models from '../core/models';
+import { ProcessLogTypes } from '../core/process_log_types';
 import { ProcessCache as ProcessCacheModel, ProcessCacheFactory } from '../models/process_cache';
 import { Process as ProcessModel, ProcessFactory } from '../models/process';
 import { ProcessJob as ProcessJobModel, ProcessJobFactory } from '../models/process_job';
 import { ProcessJobLog as ProcessJobLogModel, ProcessJobLogFactory } from '../models/process_job_log';
 import * as moment from 'moment';
-import { unwatchFile } from 'fs';
+import * as Sequelize from 'sequelize';
 
 /**
  * Process Manager is the main class that should be used when dealing with the process cache
@@ -200,6 +200,51 @@ export class ProcessManager {
                 }
 
                 resolve(processJob as ProcessJobModel);
+            },
+        );
+    }
+
+    /**
+     * Pull all logs related to the process
+     * @param process The process we want to pull the logs from
+     * @param logType An optional parameter. If its included, you'll only receive the specific type of log
+     */
+    public getProcessLogs(process: ProcessModel, logType?: ProcessLogTypes): Promise<ProcessJobLogModel[]> {
+        return new Promise(
+            async (resolve): Promise<void> => {
+                this.cacheProcess(process);
+                let results: ProcessJobLogModel[] = [];
+
+                results = await ProcessJobLogModel.findAll({
+                    where: {
+                        process: process.id,
+                        type: {
+                            [Sequelize.Op.in]: logType ? [logType] : [Object.values(ProcessLogTypes)],
+                        },
+                    },
+                });
+
+                resolve(results);
+            },
+        );
+    }
+
+    public getJobLogs(job: ProcessJobModel, logType?: ProcessLogTypes): Promise<ProcessJobLogModel[]> {
+        return new Promise(
+            async (resolve): Promise<void> => {
+                let results: ProcessJobLogModel[] = [];
+
+                results = await ProcessJobLogModel.findAll({
+                    where: {
+                        process: job.process,
+                        job: job.id,
+                        type: {
+                            [Sequelize.Op.in]: logType ? [logType] : [Object.values(ProcessLogTypes)],
+                        },
+                    },
+                });
+
+                resolve(results);
             },
         );
     }
