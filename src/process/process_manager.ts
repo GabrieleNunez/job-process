@@ -5,12 +5,14 @@ import { Process as ProcessModel, ProcessFactory } from '../models/process';
 import { ProcessJob as ProcessJobModel, ProcessJobFactory } from '../models/process_job';
 import { ProcessJobLog as ProcessJobLogModel, ProcessJobLogFactory } from '../models/process_job_log';
 import * as moment from 'moment';
+import { unwatchFile } from 'fs';
 
 /**
  * Process Manager is the main class that should be used when dealing with the process cache
  */
 export class ProcessManager {
     protected processList: { [processName: string]: ProcessModel };
+    protected jobList: { [processName: string]: { [jobName: string]: ProcessJobModel } };
     protected caches: { [processName: string]: { [jobName: string]: ProcessCacheModel } };
     protected database: Database;
 
@@ -19,6 +21,7 @@ export class ProcessManager {
         this.processList = {};
         this.caches = {};
         this.database = database;
+        this.jobList = {};
     }
 
     /**
@@ -57,6 +60,37 @@ export class ProcessManager {
     }
 
     /**
+     * Format the job name. This is functionality equivalent to formatProcessName but might change before stable release
+     */
+    private formatJobName(jobName: string): string {
+        return this.formatProcessName(jobName);
+    }
+
+    /**
+     * Cache our process if possible
+     * @param process The process we want to cache into our system
+     */
+    private cacheProcess(process: ProcessModel): void {
+        if (typeof this.processList[process.name] == 'undefined') {
+            this.processList[process.name] = process;
+        }
+
+        if (typeof this.caches[process.name] == 'undefined') {
+            this.caches[process.name] = {};
+        }
+
+        if (typeof this.jobList[process.name] == 'undefined') {
+            this.jobList[process.name] = {};
+        }
+    }
+
+    private cacheJob(process: ProcessModel, job: ProcessJobModel): void {
+        // make sure that our process is already cached, if it is then all good!
+        this.cacheProcess(process);
+        this.jobList[process.name][job.name] = job;
+    }
+
+    /**
      * get the process specified by name
      */
     public getProcess(processName: string): Promise<ProcessModel | null> {
@@ -72,8 +106,8 @@ export class ProcessManager {
                     });
 
                     if (process !== null) {
-                        this.processList[processName] = process;
-                        this.caches[processName] = {}; // create a placeholder for our process cache
+                        // since we have just pulled this from the database go ahead and add everything into our variables
+                        this.cacheProcess(process);
                     } else {
                         resolve(null);
                     }
@@ -103,9 +137,69 @@ export class ProcessManager {
                         createdAt: moment().unix(),
                         updatedAt: 0,
                     });
-                    this.processList[processName] = process;
+                    this.cacheProcess(process);
                 }
                 resolve(process as ProcessModel);
+            },
+        );
+    }
+
+    /**
+     * Gets the job tied to the process
+     * @param process The process that we are going to use to pull information from
+     * @param jobName The name of the job that we want to get
+     */
+    public getJob(process: ProcessModel, jobName: string): Promise<ProcessJobModel | null> {
+        return new Promise(
+            async (resolve): Promise<void> => {
+                // this is a sanity check for our logic
+                // there is no harm in attempting to recache a process
+                // this method handles it gracefully
+                this.cacheProcess(process);
+                let job: ProcessJobModel | null = null;
+                if (typeof this.jobList[process.name][jobName] == 'undefined') {
+                    // not cached, fetch it from the database if possible
+                    job = await ProcessJobModel.findOne({
+                        where: {
+                            process: process.id,
+                            name: jobName,
+                        },
+                    });
+                    if (job !== null) {
+                        this.cacheJob(process, job);
+                    }
+                } else {
+                    job = this.jobList[process.name][jobName];
+                }
+
+                resolve(job);
+            },
+        );
+    }
+
+    /**
+     * Creates a job if possible that is tied to the supplied process
+     * @param process
+     * @param jobName
+     */
+    public createJob(process: ProcessModel, jobName: string): Promise<ProcessJobModel> {
+        return new Promise(
+            async (resolve): Promise<void> => {
+                let processJob: ProcessJobModel | null = null;
+                jobName = this.formatJobName(jobName);
+                processJob = await this.getJob(process, jobName);
+                if (processJob === null) {
+                    processJob = await ProcessJobModel.create({
+                        id: null,
+                        process: process.id,
+                        name: jobName,
+                        createdAt: moment().unix(),
+                        updatedAt: 0,
+                    });
+                    this.cacheJob(process, processJob as ProcessJobModel);
+                }
+
+                resolve(processJob as ProcessJobModel);
             },
         );
     }
