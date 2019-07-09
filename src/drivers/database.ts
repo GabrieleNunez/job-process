@@ -44,7 +44,7 @@ export class Database {
      */
     public model<T1 extends typeof Sequelize.Model>(modelName: string): T1 {
         if (typeof this.db.models[modelName] !== 'undefined') {
-            return this.db.models[modelName] as T1;
+            return this.db.model(modelName) as T1;
         } else {
             throw 'Model: ' + modelName + ' not  found';
         }
