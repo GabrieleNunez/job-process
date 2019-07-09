@@ -5,6 +5,7 @@ import { ProcessLogTypes } from '../core/process_log_types';
 import { Process as ProcessModel, Process } from '../models/process';
 import { ProcessJob as ProcessJobModel } from '../models/process_job';
 import { ProcessCache as ProcessCacheModel } from '../models/process_cache';
+import { runInThisContext } from 'vm';
 
 export class Job {
     protected processManager: ProcessManager;
@@ -75,5 +76,20 @@ export class Job {
      */
     public getCache(key: string): Promise<ProcessCacheModel[]> {
         return this.machine.getCache(this.process as ProcessModel, this.processJob as ProcessJobModel, key);
+    }
+
+    /**
+     * Determines if a specific key exist in the cache
+     * @param key The key to look for
+     */
+    public hasCacheKey(key: string): Promise<boolean> {
+        return this.machine.hasCacheKey(this.process as ProcessModel, this.processJob as ProcessJobModel, key);
+    }
+
+    /**
+     * Determines if this job has a current cache
+     */
+    public hasCache(): Promise<boolean> {
+        return this.machine.hasCache(this.process as ProcessModel, this.processJob as ProcessJobModel);
     }
 }

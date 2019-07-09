@@ -183,6 +183,59 @@ export class Machine {
             },
         );
     }
+
+    /**
+     * Determines if a key exist in the cache for this machine
+     * @param process THe process that this cache value is tied too
+     * @param job The job that we are looking into
+     * @param key The key we want to retrieve
+     */
+    public hasCacheKey(process: ProcessModel, job: ProcessJobModel, key: string): Promise<boolean> {
+        return new Promise(
+            async (resolve): Promise<void> => {
+                let result = false;
+
+                let foundResult: number = await this.database
+                    .model<typeof ProcessCacheModel>(Models.ProcessCache)
+                    .count({
+                        where: {
+                            process: process.id,
+                            job: job.id,
+                            key: key,
+                            machine: this.machine,
+                        },
+                    });
+                result = foundResult > 0 ? true : false;
+                resolve(result);
+            },
+        );
+    }
+
+    /**
+     * Determines if a cache exist at all for the current machine
+     * @param process The process we want to look into
+     * @param job The job we want to look into
+     */
+    public hasCache(process: ProcessModel, job: ProcessJobModel): Promise<boolean> {
+        return new Promise(
+            async (resolve): Promise<void> => {
+                let result = false;
+
+                let foundResult: number = await this.database
+                    .model<typeof ProcessCacheModel>(Models.ProcessCache)
+                    .count({
+                        where: {
+                            process: process.id,
+                            job: job.id,
+                            machine: this.machine,
+                        },
+                    });
+
+                result = foundResult > 0 ? true : false;
+                resolve(result);
+            },
+        );
+    }
 }
 
 export default Machine;
