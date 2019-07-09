@@ -1,10 +1,10 @@
 import Database from '../drivers/database';
-import Models from 'core/models';
 import ProcessManager from './process_manager';
 import Machine from './machine';
 import { ProcessLogTypes } from '../core/process_log_types';
 import { Process as ProcessModel, Process } from '../models/process';
-import { ProcessJob as ProcessJobModel, ProcessJob } from '../models/process_job';
+import { ProcessJob as ProcessJobModel } from '../models/process_job';
+import { ProcessCache as ProcessCacheModel } from '../models/process_cache';
 
 export class Job {
     protected processManager: ProcessManager;
@@ -52,7 +52,12 @@ export class Job {
      * @param logType The kind of log we want to issue
      */
     public createLog(message: string, logType: ProcessLogTypes = ProcessLogTypes.Generic): Promise<void> {
-        return this.machine.createLog(this.process as ProcessModel, this.processJob as ProcessJob, message, logType);
+        return this.machine.createLog(
+            this.process as ProcessModel,
+            this.processJob as ProcessJobModel,
+            message,
+            logType,
+        );
     }
 
     /**
@@ -62,5 +67,13 @@ export class Job {
      */
     public createCache(key: string, value: string): Promise<void> {
         return this.machine.createCache(this.process as ProcessModel, this.processJob as ProcessJobModel, key, value);
+    }
+
+    /**
+     * Gets the specific values that can be found that match the specific key. This is functionally just a wrapper
+     * @param key
+     */
+    public getCache(key: string): Promise<ProcessCacheModel[]> {
+        return this.machine.getCache(this.process as ProcessModel, this.processJob as ProcessJobModel, key);
     }
 }
