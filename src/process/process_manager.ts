@@ -30,6 +30,7 @@ export class ProcessManager {
     protected caches: { [processId: number]: { [jobId: number]: { [cacheId: number]: ProcessCacheModel } } };
     protected logs: { [processId: number]: { [jobId: number]: { [logId: number]: ProcessJobLogModel } } };
     protected database: Database;
+    protected loadCompleted: boolean;
 
     /** Construct our process manager. This does not do any database loading. Please use .load to load in information from the database */
     public constructor(database: Database) {
@@ -38,6 +39,7 @@ export class ProcessManager {
         this.database = database;
         this.jobList = {};
         this.logs = {};
+        this.loadCompleted = false;
     }
 
     /**
@@ -45,17 +47,21 @@ export class ProcessManager {
      */
     public load(): Promise<void> {
         return new Promise((resolve): void => {
-            // initialitze all models
-            ProcessFactory.init(this.database.connection());
-            ProcessJobFactory.init(this.database.connection());
-            ProcessJobLogFactory.init(this.database.connection());
-            ProcessCacheFactory.init(this.database.connection());
+            if (this.loadCompleted === false) {
+                // initialitze all models
+                ProcessFactory.init(this.database.connection());
+                ProcessJobFactory.init(this.database.connection());
+                ProcessJobLogFactory.init(this.database.connection());
+                ProcessCacheFactory.init(this.database.connection());
 
-            // associate all models
-            ProcessFactory.associate();
-            ProcessJobFactory.associate();
-            ProcessJobLogFactory.associate();
-            ProcessCacheFactory.associate();
+                // associate all models
+                ProcessFactory.associate();
+                ProcessJobFactory.associate();
+                ProcessJobLogFactory.associate();
+                ProcessCacheFactory.associate();
+
+                this.loadCompleted = true;
+            }
 
             resolve();
         });
@@ -330,6 +336,35 @@ export class ProcessManager {
                     order: [['createdAt', 'ASC']],
                 });
 
+                resolve(results);
+            },
+        );
+    }
+
+    /**
+     * Gets all the cache values stored at the specific key tied to the specific process and job.
+     * This does mean that all cache values returned here are not tied
+     * @param process The process that our cache is tied too
+     * @param job The job that our cache is tied too
+     * @param key The key that this is tied too
+     */
+    public getCache(process: ProcessModel, job: ProcessJobModel, key: string): Promise<ProcessCacheModel[]> {
+        return new Promise(
+            async (resolve): Promise<void> => {
+                // make sure our process and job are cached
+                this.cacheProcess(process);
+                this.cacheJob(process, job);
+
+                // grab results from the cache. Note: this does not tie it to a specific machine
+                let results: ProcessCacheModel[] = [];
+                results = await ProcessCacheModel.findAll({
+                    where: {
+                        process: process.id,
+                        job: job.id,
+                        key: key,
+                    },
+                    order: [['createdAt', 'ASC']],
+                });
                 resolve(results);
             },
         );

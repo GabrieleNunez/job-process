@@ -1,12 +1,13 @@
 import Database from '../drivers/database';
+import Models from 'core/models';
 import { ProcessLogTypes } from '../core/process_log_types';
-import { ProcessCache as ProcessCacheModel, ProcessCacheFactory } from '../models/process_cache';
-import { Process as ProcessModel, ProcessFactory } from '../models/process';
-import { ProcessJob as ProcessJobModel, ProcessJobFactory } from '../models/process_job';
-import { ProcessJobLog as ProcessJobLogModel, ProcessJobLogFactory } from '../models/process_job_log';
+import { Process as ProcessModel } from '../models/process';
+import { ProcessJob as ProcessJobModel } from '../models/process_job';
+import { ProcessJobLog as ProcessJobLogModel } from '../models/process_job_log';
+import { ProcessCache as ProcessCacheModel } from '../models/process_cache';
 import * as moment from 'moment';
 import * as Sequelize from 'sequelize';
-import Models from 'core/models';
+import ProcessManager from './process_manager';
 
 /**
  * An advanced way to filter through the resultsof the process job log initially
@@ -28,118 +29,23 @@ export const MACHINE_JOB_LOG_FILTERS_DEFAULT: MachineJobLogFilters = {};
 export class Machine {
     protected machine: string;
     protected database: Database;
-    protected jobList: { [processName: string]: { [jobName: string]: ProcessJobModel } };
-    protected caches: { [processId: number]: { [jobId: number]: { [cacheId: number]: ProcessCacheModel } } };
-    protected logs: { [processId: number]: { [jobId: number]: { [logId: number]: ProcessJobLogModel } } };
-    protected processList: { [processName: string]: ProcessModel };
+    protected processManager: ProcessManager;
     /**
      * Construct what represents our machine
      * @param machineName
      */
-    public constructor(database: Database, machineName: string) {
+    public constructor(database: Database, machineName: string, processManager?: ProcessManager) {
         this.machine = machineName;
         this.database = database;
-        this.jobList = {};
-        this.caches = {};
-        this.logs = {};
-        this.processList = {};
-    }
-
-    /**
-     * Trims, cleans and formats the process name into a clean name
-     * @param processName
-     */
-    private formatProcessName(processName: string): string {
-        return processName
-            .trim()
-            .toLowerCase()
-            .replace(/[\s\*\,\.\-]+/g, '-') // convert all long spaces,'*',',','.','-' characters into a singular dash '-'
-            .trim() // trim the output again just to be sane
-            .replace(/[\-]+/g, '-') // take all back to back dashes ('--', '------','--dsa---f-gfg---regre-g') combos and trim it into a single dash '-'
-            .trim(); // again just a trim just to be sane
-    }
-
-    /**
-     * Format the job name. This is functionality equivalent to formatProcessName but might change before stable release
-     */
-    private formatJobName(jobName: string): string {
-        return this.formatProcessName(jobName);
-    }
-
-    /**
-     * Cache our process if possible
-     * @param process The process we want to cache into our system
-     */
-    private cacheProcess(process: ProcessModel): void {
-        if (typeof this.processList[process.name] == 'undefined') {
-            this.processList[process.name] = process;
-        }
-
-        if (typeof this.caches[process.id] == 'undefined') {
-            this.caches[process.id] = {};
-        }
-
-        if (typeof this.jobList[process.name] == 'undefined') {
-            this.jobList[process.name] = {};
-        }
-
-        if (typeof this.logs[process.id] == 'undefined') {
-            this.logs[process.id] = {};
+        if (processManager) {
+            this.processManager = processManager;
+        } else {
+            this.processManager = new ProcessManager(database);
         }
     }
 
-    /**
-     * Makes sure the job can be cached if possible
-     * @param process The process that this job is tied too
-     * @param job The job we intend to cache
-     */
-    private cacheJob(process: ProcessModel, job: ProcessJobModel): void {
-        // make sure that our process is already cached, if it is then all good!
-        this.cacheProcess(process);
-        this.jobList[process.name][job.name] = job;
-
-        if (typeof this.caches[process.id][job.id] == 'undefined') {
-            this.caches[process.id][job.id] = {};
-        }
-
-        if (typeof this.logs[process.id] == 'undefined') {
-            this.logs[process.id] = {};
-        }
-
-        if (typeof this.logs[process.id][job.id] == 'undefined') {
-            this.logs[process.id][job.id] = {};
-        }
-    }
-
-    /**
-     * Logs the specific log to retrieve later on
-     * @param log the log we are intending to cache
-     */
-    private cacheLog(log: ProcessJobLogModel): void {
-        if (typeof this.logs[log.process] == 'undefined') {
-            this.logs[log.process] = {};
-        }
-
-        if (typeof this.logs[log.process][log.job] == 'undefined') {
-            this.logs[log.process][log.job] = {};
-        }
-        this.logs[log.process][log.job][log.id] = log;
-    }
-
-    /**
-     * Caches into memory what was stored into the database. This is good for freqeuent accesses
-     * @param cacheData The data we want to cache into memory
-     */
-    private cacheProcessCache(cacheData: ProcessCacheModel): void {
-        if (typeof this.caches[cacheData.process] == 'undefined') {
-            this.caches[cacheData.process] = {};
-        }
-
-        if (typeof this.caches[cacheData.process][cacheData.job] == 'undefined') {
-            this.caches[cacheData.process][cacheData.job] = {};
-        }
-
-        this.caches[cacheData.process][cacheData.job][cacheData.id] = cacheData;
+    public load(): Promise<void> {
+        return this.processManager.load();
     }
 
     /**
@@ -154,7 +60,6 @@ export class Machine {
     ): Promise<ProcessJobLogModel[]> {
         return new Promise(
             async (resolve): Promise<void> => {
-                this.cacheProcess(process);
                 let results: ProcessJobLogModel[] = [];
 
                 results = await this.database.model<typeof ProcessJobLogModel>(Models.ProcessJobLog).findAll({
@@ -226,6 +131,55 @@ export class Machine {
                     updatedAt: 0,
                 });
                 resolve();
+            },
+        );
+    }
+
+    /**
+     * Creates a cache value tied to the process, job and this machine
+     * @param process The process we want to tie to
+     * @param job The Job we want to tie to
+     * @param key The key of the value we want to tie to
+     * @param value The value that we are trying to store
+     */
+    public createCache(process: ProcessModel, job: ProcessJobModel, key: string, value: string): Promise<void> {
+        return new Promise(
+            async (resolve): Promise<void> => {
+                await this.database.model<typeof ProcessCacheModel>(Models.ProcessCache).create({
+                    id: null,
+                    process: process.id,
+                    job: job.id,
+                    machine: this.machine,
+                    key: key,
+                    value: value,
+                    createdAt: moment().unix(),
+                    updatedAt: 0,
+                });
+                resolve();
+            },
+        );
+    }
+
+    /**
+     * Gets all the cache values stored at the specific key tied to this machine matching the process and job
+     * @param process The process that our cache is tied too
+     * @param job The job that our cache is tied too
+     * @param key The key that this is tied too
+     */
+    public getCache(process: ProcessModel, job: ProcessJobModel, key: string): Promise<ProcessCacheModel[]> {
+        return new Promise(
+            async (resolve): Promise<void> => {
+                let results: ProcessCacheModel[] = [];
+                results = await this.database.model<typeof ProcessCacheModel>(Models.ProcessCache).findAll({
+                    where: {
+                        process: process.id,
+                        job: job.id,
+                        machine: this.machine,
+                        key: key,
+                    },
+                    order: [['createdAt', 'ASC']],
+                });
+                resolve(results);
             },
         );
     }
