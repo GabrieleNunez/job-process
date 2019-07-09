@@ -62,7 +62,7 @@ export class ProcessManager {
     public getProcess(processName: string): Promise<ProcessModel | null> {
         return new Promise(
             async (resolve): Promise<void> => {
-                processName = this.formatProcessName(processName);
+                // processName = this.formatProcessName(processName);
                 // if we don't already have this process cached, go ahead and pull it from the database
                 if (typeof this.processList[processName] == 'undefined') {
                     let process: ProcessModel | null = await ProcessModel.findOne({
@@ -103,6 +103,7 @@ export class ProcessManager {
                         createdAt: moment().unix(),
                         updatedAt: 0,
                     });
+                    this.processList[processName] = process;
                 }
                 resolve(process as ProcessModel);
             },
