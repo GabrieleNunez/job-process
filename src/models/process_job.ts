@@ -1,4 +1,5 @@
 import ModelFactory from '../core/factory';
+import Models from '../core/models';
 import { Process } from './process';
 import { ProcessJobLog } from './process_job_log';
 import { ProcessCache } from './process_cache';
@@ -30,6 +31,7 @@ export const ProcessJobAttributesDefinition: Sequelize.ModelAttributes = {
         type: Sequelize.DataTypes.INTEGER,
         primaryKey: true,
         allowNull: false,
+        autoIncrement: true,
     },
     process: {
         type: Sequelize.DataTypes.INTEGER,
@@ -57,7 +59,7 @@ export abstract class ProcessJobFactory extends ModelFactory {
     public static init(sequelize: Sequelize.Sequelize): void {
         ProcessJob.init(ProcessJobAttributesDefinition, {
             sequelize: sequelize,
-            modelName: 'process_job',
+            modelName: Models.ProcessJob,
             tableName: 'process_jobs',
             timestamps: false,
         });

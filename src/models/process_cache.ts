@@ -28,6 +28,7 @@ export const ProcessCacheAttributeDefinition: Sequelize.ModelAttributes = {
         type: Sequelize.DataTypes.INTEGER,
         primaryKey: true,
         allowNull: false,
+        autoIncrement: true,
     },
     process: {
         type: Sequelize.DataTypes.INTEGER,

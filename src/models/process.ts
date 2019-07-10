@@ -37,6 +37,7 @@ export const ProcessAttributesDefinition: Sequelize.ModelAttributes = {
         type: Sequelize.DataTypes.INTEGER,
         primaryKey: true,
         allowNull: false,
+        autoIncrement: true,
     },
     name: {
         type: Sequelize.DataTypes.STRING,
@@ -60,8 +61,6 @@ export const ProcessAttributesDefinition: Sequelize.ModelAttributes = {
  */
 export abstract class ProcessFactory extends ModelFactory {
     public static init(sequelize: Sequelize.Sequelize): void {
-        console.log([Models.Process]);
-        console.log('Created process model');
         Process.init(ProcessAttributesDefinition, {
             sequelize: sequelize,
             modelName: Models.Process,
