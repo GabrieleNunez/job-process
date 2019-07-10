@@ -6,7 +6,6 @@ import { Process as ProcessModel, Process } from '../models/process';
 import { ProcessJob as ProcessJobModel } from '../models/process_job';
 import { ProcessJobLog as ProcessJobLogModel } from '../models/process_job_log';
 import { ProcessCache as ProcessCacheModel } from '../models/process_cache';
-import { resolve } from 'bluebird';
 
 export abstract class Job {
     protected processManager: ProcessManager;

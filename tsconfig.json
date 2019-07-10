@@ -16,7 +16,8 @@
 	],
 	"exclude" : [
 		"node_modules",
-		"./src/env.sample.ts",
+        "./src/env.sample.ts",
+        "./src/example.ts",
     ],
 }
 

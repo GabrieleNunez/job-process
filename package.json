@@ -1,5 +1,5 @@
 {
-  "name": "job-process",
+  "name": "process-cache",
   "version": "0.5.0",
   "description": "Working together is better then working alone",
   "main": "dist/index.js",
