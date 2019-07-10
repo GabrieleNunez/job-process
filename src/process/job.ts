@@ -6,7 +6,7 @@ import { Process as ProcessModel, Process } from '../models/process';
 import { ProcessJob as ProcessJobModel } from '../models/process_job';
 import { ProcessCache as ProcessCacheModel } from '../models/process_cache';
 
-export class Job {
+export abstract class Job {
     protected processManager: ProcessManager;
     protected machine: Machine;
     protected jobName: string;
@@ -41,10 +41,28 @@ export class Job {
                 this.process = await this.processManager.createProcess(this.processName);
                 this.processJob = await this.processManager.createJob(this.process, this.jobName);
 
+                // if we have a cache we are going to pull all the data from it and let inherrited classes manipualte it
+                // otherwise we will signal to our child class that its empty and it needs to be filled if possible
+                let hasCache: boolean = await this.hasCache();
+                if (hasCache) {
+                    await this.onCacheExist();
+                } else {
+                    await this.onCacheEmpty();
+                }
+
                 resolve();
             },
         );
     }
+
+    /**
+     * When the cache is already present, this method is called for you to manipulate it into any format you need to
+     */
+    protected abstract onCacheExist(): Promise<void>;
+    /**
+     * When we have no cache this method will be triggered in load
+     */
+    protected abstract onCacheEmpty(): Promise<void>;
 
     /**
      * Log whatever message/value we want. This is functionally a wrapper that calls machine.createLog
@@ -92,6 +110,9 @@ export class Job {
         return this.machine.hasCache(this.process as ProcessModel, this.processJob as ProcessJobModel);
     }
 
+    /**
+     * Get the full cache tied to this job and process
+     */
     public getFullCache(): Promise<ProcessCacheModel[]> {
         return this.machine.getFullCache(this.process as ProcessModel, this.processJob as ProcessJobModel);
     }
