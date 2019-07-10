@@ -49,6 +49,17 @@ export class Database {
             throw 'Model: ' + modelName + ' not  found';
         }
     }
+
+    /**
+     * Release the connection and free up resources
+     */
+    public dispose(): Promise<void> {
+        return new Promise((resolve): void => {
+            this.db.close().then((): void => {
+                resolve();
+            });
+        });
+    }
 }
 
 export default Database;
