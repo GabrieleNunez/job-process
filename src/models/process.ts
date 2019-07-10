@@ -66,6 +66,7 @@ export abstract class ProcessFactory extends ModelFactory {
             modelName: Models.Process,
             tableName: 'processes',
             timestamps: false,
+            indexes: [{ unique: true, fields: ['name'], name: 'processes_name' }],
         });
     }
 
