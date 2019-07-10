@@ -4,7 +4,9 @@ import Machine from './machine';
 import { ProcessLogTypes } from '../core/process_log_types';
 import { Process as ProcessModel, Process } from '../models/process';
 import { ProcessJob as ProcessJobModel } from '../models/process_job';
+import { ProcessJobLog as ProcessJobLogModel } from '../models/process_job_log';
 import { ProcessCache as ProcessCacheModel } from '../models/process_cache';
+import { resolve } from 'bluebird';
 
 export abstract class Job {
     protected processManager: ProcessManager;
@@ -94,7 +96,7 @@ export abstract class Job {
      * @param message The message we are trying to log
      * @param logType The kind of log we want to issue
      */
-    public createLog(message: string, logType: ProcessLogTypes = ProcessLogTypes.Generic): Promise<void> {
+    public createLog(message: string, logType: ProcessLogTypes = ProcessLogTypes.Generic): Promise<ProcessJobLogModel> {
         return this.machine.createLog(
             this.process as ProcessModel,
             this.processJob as ProcessJobModel,
@@ -108,8 +110,20 @@ export abstract class Job {
      * @param key The key where we want to store it. KEYS ARE NOT UNIQUE, multiple values the share the same relationship should share the same key
      * @param value  The value that we are trying to store it.
      */
-    public createCache(key: string, value: string): Promise<void> {
-        return this.machine.createCache(this.process as ProcessModel, this.processJob as ProcessJobModel, key, value);
+    public createCache(key: string, value: string): Promise<ProcessCacheModel> {
+        return new Promise((resolve): void => {
+            this.machine
+                .createCache(this.process as ProcessModel, this.processJob as ProcessJobModel, key, value)
+                .then((result: ProcessCacheModel): void => {
+                    this.cacheResults[result.id] = result;
+                    if (typeof this.cacheTree[result.key] == 'undefined') {
+                        this.cacheTree[result.key] = {};
+                    }
+
+                    this.cacheTree[result.key][result.id] = result;
+                    resolve(result);
+                });
+        });
     }
 
     /**

@@ -4,7 +4,7 @@
 export enum ProcessLogTypes {
     Generic = 'GENERIC',
     Warning = 'WARNING',
-    ERROR = 'ERROR',
+    Error = 'ERROR',
 }
 
 /** The expected log types */

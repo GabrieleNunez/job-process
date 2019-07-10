@@ -3,7 +3,7 @@ import Models from 'core/models';
 import { ProcessLogTypes } from '../core/process_log_types';
 import { Process as ProcessModel } from '../models/process';
 import { ProcessJob as ProcessJobModel } from '../models/process_job';
-import { ProcessJobLog as ProcessJobLogModel } from '../models/process_job_log';
+import { ProcessJobLog as ProcessJobLogModel, ProcessJobLog } from '../models/process_job_log';
 import { ProcessCache as ProcessCacheModel } from '../models/process_cache';
 import * as moment from 'moment';
 import * as Sequelize from 'sequelize';
@@ -112,25 +112,34 @@ export class Machine {
         );
     }
 
+    /**
+     * Log the whatever message that is tied to the process and job of our choosing.
+     * @param process The process we want to link to
+     * @param job The job we want to link to
+     * @param message The message we want to log
+     * @param logType The type of log we want to log
+     */
     public createLog(
         process: ProcessModel,
         job: ProcessJobModel,
         message: string,
         logType: ProcessLogTypes = ProcessLogTypes.Generic,
-    ): Promise<void> {
+    ): Promise<ProcessJobLogModel> {
         return new Promise(
             async (resolve): Promise<void> => {
-                await this.database.model<typeof ProcessJobLogModel>(Models.ProcessJobLog).create({
-                    id: null,
-                    process: process.id,
-                    job: job.id,
-                    type: logType,
-                    machine: this.machine,
-                    message: message,
-                    createdAt: moment().unix(),
-                    updatedAt: 0,
-                });
-                resolve();
+                let result: ProcessJobLogModel = await this.database
+                    .model<typeof ProcessJobLogModel>(Models.ProcessJobLog)
+                    .create({
+                        id: null,
+                        process: process.id,
+                        job: job.id,
+                        type: logType,
+                        machine: this.machine,
+                        message: message,
+                        createdAt: moment().unix(),
+                        updatedAt: 0,
+                    });
+                resolve(result);
             },
         );
     }
@@ -142,20 +151,27 @@ export class Machine {
      * @param key The key of the value we want to tie to
      * @param value The value that we are trying to store
      */
-    public createCache(process: ProcessModel, job: ProcessJobModel, key: string, value: string): Promise<void> {
+    public createCache(
+        process: ProcessModel,
+        job: ProcessJobModel,
+        key: string,
+        value: string,
+    ): Promise<ProcessCacheModel> {
         return new Promise(
             async (resolve): Promise<void> => {
-                await this.database.model<typeof ProcessCacheModel>(Models.ProcessCache).create({
-                    id: null,
-                    process: process.id,
-                    job: job.id,
-                    machine: this.machine,
-                    key: key,
-                    value: value,
-                    createdAt: moment().unix(),
-                    updatedAt: 0,
-                });
-                resolve();
+                let created: ProcessCacheModel = await this.database
+                    .model<typeof ProcessCacheModel>(Models.ProcessCache)
+                    .create({
+                        id: null,
+                        process: process.id,
+                        job: job.id,
+                        machine: this.machine,
+                        key: key,
+                        value: value,
+                        createdAt: moment().unix(),
+                        updatedAt: 0,
+                    });
+                resolve(created);
             },
         );
     }
