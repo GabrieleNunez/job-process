@@ -13,6 +13,8 @@ export abstract class Job {
     protected processName: string;
     protected processJob: ProcessJobModel | null;
     protected process: Process | null;
+    protected cacheResults: { [cacheId: number]: ProcessCacheModel };
+    protected cacheTree: { [cacheKey: string]: { [cacheId: number]: ProcessCacheModel } };
 
     /**
      * Construct our basic job class. Make sure to call job.load() or things will break
@@ -28,6 +30,8 @@ export abstract class Job {
         this.jobName = jobName;
         this.process = null;
         this.processJob = null;
+        this.cacheResults = {};
+        this.cacheTree = {};
     }
 
     /**
@@ -45,6 +49,7 @@ export abstract class Job {
                 // otherwise we will signal to our child class that its empty and it needs to be filled if possible
                 let hasCache: boolean = await this.hasCache();
                 if (hasCache) {
+                    await this.syncCache();
                     await this.onCacheExist();
                 } else {
                     await this.onCacheEmpty();
@@ -63,6 +68,26 @@ export abstract class Job {
      * When we have no cache this method will be triggered in load
      */
     protected abstract onCacheEmpty(): Promise<void>;
+
+    protected syncCache(): Promise<void> {
+        return new Promise(
+            async (resolve): Promise<void> => {
+                this.cacheResults = {};
+                this.cacheTree = {};
+                // build a tree around the results we have so we can access everything locally
+                let resultCache = await this.getFullCache();
+                for (var i = 0; i < resultCache.length; i++) {
+                    if (typeof this.cacheTree[resultCache[i].key] == 'undefined') {
+                        this.cacheTree[resultCache[i].key] = {};
+                    }
+
+                    this.cacheTree[resultCache[i].key][resultCache[i].id] = resultCache[i];
+                    this.cacheResults[resultCache[i].id] = resultCache[i];
+                }
+                resolve();
+            },
+        );
+    }
 
     /**
      * Log whatever message/value we want. This is functionally a wrapper that calls machine.createLog
