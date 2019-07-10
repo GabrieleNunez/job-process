@@ -15,7 +15,7 @@ export abstract class Job {
     protected processJob: ProcessJobModel | null;
     protected process: Process | null;
     protected cacheResults: { [cacheId: number]: ProcessCacheModel };
-    protected cacheTree: { [cacheKey: string]: { [cacheId: number]: ProcessCacheModel } };
+    protected cacheTree: { [cacheKey: string]: ProcessCacheModel[] };
     protected loaded: boolean;
 
     /**
@@ -87,10 +87,10 @@ export abstract class Job {
                 let resultCache = await this.getFullCache();
                 for (var i = 0; i < resultCache.length; i++) {
                     if (typeof this.cacheTree[resultCache[i].key] == 'undefined') {
-                        this.cacheTree[resultCache[i].key] = {};
+                        this.cacheTree[resultCache[i].key] = [];
                     }
 
-                    this.cacheTree[resultCache[i].key][resultCache[i].id] = resultCache[i];
+                    this.cacheTree[resultCache[i].key].push(resultCache[i]);
                     this.cacheResults[resultCache[i].id] = resultCache[i];
                 }
                 resolve();
@@ -124,10 +124,9 @@ export abstract class Job {
                 .then((result: ProcessCacheModel): void => {
                     this.cacheResults[result.id] = result;
                     if (typeof this.cacheTree[result.key] == 'undefined') {
-                        this.cacheTree[result.key] = {};
+                        this.cacheTree[result.key] = [];
                     }
-
-                    this.cacheTree[result.key][result.id] = result;
+                    this.cacheTree[result.key].push(result);
                     resolve(result);
                 });
         });
