@@ -73,6 +73,12 @@ export abstract class ProcessJobLogFactory extends ModelFactory {
             modelName: Models.ProcessJobLog,
             tableName: 'process_job_logs',
             timestamps: false,
+            indexes: [
+                { unique: false, fields: ['process'] },
+                { unique: false, fields: ['job'] },
+                { unique: false, fields: ['type'] },
+                { unique: false, fields: ['machine'] },
+            ],
         });
     }
 

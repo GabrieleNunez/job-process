@@ -73,6 +73,12 @@ export class ProcessCacheFactory extends ModelFactory {
             modelName: Models.ProcessCache,
             tableName: 'process_cache',
             timestamps: false,
+            indexes: [
+                { unique: false, fields: ['process'] },
+                { unique: false, fields: ['job'] },
+                { unique: false, fields: ['key'] },
+                { unique: false, fields: ['machine'] },
+            ],
         });
     }
 

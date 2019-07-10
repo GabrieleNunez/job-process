@@ -62,7 +62,11 @@ export abstract class ProcessJobFactory extends ModelFactory {
             modelName: Models.ProcessJob,
             tableName: 'process_jobs',
             timestamps: false,
-            indexes: [{ unique: true, fields: ['process', 'name'] }],
+            indexes: [
+                { unique: true, fields: ['process', 'name'] },
+                { unique: false, fields: ['process'] },
+                { unique: false, fields: ['name'] },
+            ],
         });
     }
 
