@@ -6,6 +6,7 @@ import { ProcessJob as ProcessJobModel, ProcessJobFactory } from '../models/proc
 import { ProcessJobLog as ProcessJobLogModel, ProcessJobLogFactory } from '../models/process_job_log';
 import * as moment from 'moment';
 import * as Sequelize from 'sequelize';
+import Models from '../core/models';
 
 /**
  * An advanced way to filter through the resultsof the process job log initially
@@ -65,6 +66,13 @@ export class ProcessManager {
 
             resolve();
         });
+    }
+
+    /**
+     * Gets if this process manager is loaded already
+     */
+    public isLoaded(): boolean {
+        return this.loadCompleted;
     }
 
     /**
@@ -173,15 +181,18 @@ export class ProcessManager {
                 // processName = this.formatProcessName(processName);
                 // if we don't already have this process cached, go ahead and pull it from the database
                 if (typeof this.processList[processName] == 'undefined') {
-                    let process: ProcessModel | null = await ProcessModel.findOne({
-                        where: {
-                            name: processName,
-                        },
-                    });
+                    let process: ProcessModel | null = await this.database
+                        .model<typeof ProcessModel>(Models.Process)
+                        .findOne({
+                            where: {
+                                name: processName,
+                            },
+                        });
 
                     if (process !== null) {
                         // since we have just pulled this from the database go ahead and add everything into our variables
                         this.cacheProcess(process);
+                        resolve(process);
                     } else {
                         resolve(null);
                     }

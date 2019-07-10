@@ -16,6 +16,7 @@ export abstract class Job {
     protected process: Process | null;
     protected cacheResults: { [cacheId: number]: ProcessCacheModel };
     protected cacheTree: { [cacheKey: string]: { [cacheId: number]: ProcessCacheModel } };
+    protected loaded: boolean;
 
     /**
      * Construct our basic job class. Make sure to call job.load() or things will break
@@ -33,6 +34,7 @@ export abstract class Job {
         this.processJob = null;
         this.cacheResults = {};
         this.cacheTree = {};
+        this.loaded = false;
     }
 
     /**
@@ -41,19 +43,25 @@ export abstract class Job {
     public load(): Promise<void> {
         return new Promise(
             async (resolve): Promise<void> => {
-                // load our process and our job directly from the process manager making sure that they are created
-                // if they are a new one won't be inserted, the current one will be returned
-                this.process = await this.processManager.createProcess(this.processName);
-                this.processJob = await this.processManager.createJob(this.process, this.jobName);
+                if (this.loaded === false) {
+                    await this.processManager.load();
+                    await this.machine.load();
 
-                // if we have a cache we are going to pull all the data from it and let inherrited classes manipualte it
-                // otherwise we will signal to our child class that its empty and it needs to be filled if possible
-                let hasCache: boolean = await this.hasCache();
-                if (hasCache) {
-                    await this.syncCache();
-                    await this.onCacheExist();
-                } else {
-                    await this.onCacheEmpty();
+                    // load our process and our job directly from the process manager making sure that they are created
+                    // if they are a new one won't be inserted, the current one will be returned
+                    this.process = await this.processManager.createProcess(this.processName);
+                    this.processJob = await this.processManager.createJob(this.process, this.jobName);
+
+                    // if we have a cache we are going to pull all the data from it and let inherrited classes manipualte it
+                    // otherwise we will signal to our child class that its empty and it needs to be filled if possible
+                    let hasCache: boolean = await this.hasCache();
+                    if (hasCache) {
+                        await this.syncCache();
+                        await this.onCacheExist();
+                    } else {
+                        await this.onCacheEmpty();
+                    }
+                    this.loaded = true;
                 }
 
                 resolve();
@@ -154,4 +162,11 @@ export abstract class Job {
     public getFullCache(): Promise<ProcessCacheModel[]> {
         return this.machine.getFullCache(this.process as ProcessModel, this.processJob as ProcessJobModel);
     }
+
+    /**
+     * Run the job operation. This should be unique to any direct child of this class
+     */
+    public abstract run(): Promise<void>;
 }
+
+export default Job;

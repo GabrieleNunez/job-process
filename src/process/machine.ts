@@ -1,9 +1,9 @@
 import Database from '../drivers/database';
-import Models from 'core/models';
+import Models from '../core/models';
 import { ProcessLogTypes } from '../core/process_log_types';
 import { Process as ProcessModel } from '../models/process';
 import { ProcessJob as ProcessJobModel } from '../models/process_job';
-import { ProcessJobLog as ProcessJobLogModel, ProcessJobLog } from '../models/process_job_log';
+import { ProcessJobLog as ProcessJobLogModel } from '../models/process_job_log';
 import { ProcessCache as ProcessCacheModel } from '../models/process_cache';
 import * as moment from 'moment';
 import * as Sequelize from 'sequelize';
@@ -30,6 +30,7 @@ export class Machine {
     protected machine: string;
     protected database: Database;
     protected processManager: ProcessManager;
+    protected loaded: boolean;
     /**
      * Construct what represents our machine
      * @param machineName
@@ -42,10 +43,30 @@ export class Machine {
         } else {
             this.processManager = new ProcessManager(database);
         }
+        this.loaded = false;
     }
 
+    /**
+     * Loads the machine and any dependencies. You cannot load more then once
+     */
     public load(): Promise<void> {
-        return this.processManager.load();
+        return new Promise((resolve): void => {
+            if (this.loaded) {
+                resolve();
+            } else {
+                this.processManager.load().then((): void => {
+                    this.loaded = true;
+                    resolve();
+                });
+            }
+        });
+    }
+
+    /**
+     * Gets if this machine is already loaded
+     */
+    public isLoaded(): boolean {
+        return this.loaded;
     }
 
     /**

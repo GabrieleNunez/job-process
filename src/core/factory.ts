@@ -5,7 +5,7 @@ import * as Sequelize from 'sequelize';
  */
 export abstract class ModelFactory {
     public static init(sequelize: Sequelize.Sequelize): void {
-        sequelize.authenticate();
+        sequelize.models;
     }
     public static associate(): void {}
 }
