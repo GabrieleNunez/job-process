@@ -72,6 +72,7 @@ Main();
 
 Below you will find an example of how to use this library
 
+**index.ts**
 ```typescript
 import { Database, ProcessLogTypes, Job, ProcessJobLog, ProcessCache } from 'process-cache';
 import ProcessCacheDatabase from 'process-cache';
@@ -199,8 +200,10 @@ async function Main(): Promise<void> {
 
     console.log('Constructing hello world');
     let helloWorldJob: HelloWorldJob = new HelloWorldJob(database, 'desktop-main');
+    
     console.log('Loading hello world job');
     await helloWorldJob.load();
+    
     console.log('Running job');
     await helloWorldJob.run();
 
