@@ -66,3 +66,148 @@ async function Main(): Promise<void> {
 Main();
 
 ```
+
+
+## How to Use
+
+Below you will find an example of how to use this library
+
+```typescript
+import { Database, ProcessLogTypes, Job, ProcessJobLog, ProcessCache } from 'process-cache';
+import ProcessCacheDatabase from 'process-cache';
+
+class HelloWorldJob extends Job {
+    /**
+     * Construct our hello world job
+     * @param database
+     * @param machineName
+     */
+    public constructor(database: Database, machineName: string) {
+        super(database, 'example', 'hello-world', machineName);
+    }
+
+    /**
+     * This is only called when there are no cache values present
+     */
+    protected onCacheEmpty(): Promise<void> {
+        return new Promise(
+            async (resolve): Promise<void> => {
+                await this.createLog('Cache is empty and fresh');
+                resolve();
+            },
+        );
+    }
+
+    /**
+     * This is only called when some kind of cache value is present
+     */
+    protected onCacheExist(): Promise<void> {
+        return new Promise(
+            async (resolve): Promise<void> => {
+                await this.createLog('Cache does exist');
+
+                // when the cache does exist, internally a tree is created that represents the cache
+                // you can access it in a couple ways
+
+                // this.cacheTree is the most direct way
+                // this.cacheTree[key] = ProcessCache[]
+                // this is how you would loop over it
+                for (var i = 0; i < this.cacheTree['foo'].length; i++) {
+                    console.log(this.cacheTree['foo'][i].value);
+                }
+
+                // there is also this.cacheResults, which is simply the format of { [cacheDatabaseId: number] : ProcessCache }
+                for (var cacheDatabaseId in this.cacheResults) {
+                    let cache = this.cacheResults[cacheDatabaseId];
+                    console.log(cache.value);
+                }
+
+                // if for some reason you ever need to rebuild the tree
+                // doing the following this.syncCache() will rebuild the tree and results
+
+                resolve();
+            },
+        );
+    }
+
+    /**
+     * Wraps the parent createLog function, in addition to sending out to the database for logging, we log to the console window
+     * @param message The message we want to log
+     * @param logType The kind of log we are looking to make
+     */
+    public createLog(message: string, logType: ProcessLogTypes = ProcessLogTypes.Generic): Promise<ProcessJobLog> {
+        switch (logType) {
+            case ProcessLogTypes.Generic:
+                console.log(message);
+                break;
+            case ProcessLogTypes.Warning:
+                console.warn(message);
+                break;
+            case ProcessLogTypes.Error:
+                console.error(message);
+                break;
+            default:
+                console.log(message);
+                break;
+        }
+        return super.createLog(message, logType);
+    }
+
+    public run(): Promise<void> {
+        return new Promise(
+            async (resolve): Promise<void> => {
+                await this.createLog('Operation running');
+
+                await this.createLog('This is an example warning log', ProcessLogTypes.Warning);
+                await this.createLog('This is what an error looks like', ProcessLogTypes.Error);
+
+                let hasCache: boolean = await this.hasCache();
+                if (hasCache) {
+                    await this.createCache('foo', 'bar');
+                    await this.createLog('Created value "bar" at key "foo" in cache');
+                } else {
+                    await this.createCache('foo', 'nope');
+                    await this.createLog('Created value "nope" at key "foo" in cache');
+                }
+
+                resolve();
+            },
+        );
+    }
+}
+
+/**
+ * Run our job and then simply dispose of our connection
+ */
+async function Main(): Promise<void> {
+    console.log('Database details');
+
+    // creates a database connection to our process cache
+    let database: Database = ProcessCacheDatabase.createConnection({
+        login: {
+            database: 'databasehere',
+            username: 'usernamehere',
+            password: 'passwordhere',
+        },
+        orm: {
+            dialect: 'mysql',
+            port: 3306,
+            host: '127.0.0.1',
+            logging: false,
+        },
+    });
+
+    console.log('Constructing hello world');
+    let helloWorldJob: HelloWorldJob = new HelloWorldJob(database, 'desktop-main');
+    console.log('Loading hello world job');
+    await helloWorldJob.load();
+    console.log('Running job');
+    await helloWorldJob.run();
+
+    // close out the database connection before we exit
+    console.log('Closing database connection');
+    await database.dispose();
+}
+
+Main();
+```
