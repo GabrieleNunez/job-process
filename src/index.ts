@@ -8,6 +8,11 @@ export * from './process/job';
 export * from './process/machine';
 export * from './process/process_manager';
 export * from './core/process_log_types';
+export * from './drivers/database';
+export * from './models/process';
+export * from './models/process_cache';
+export * from './models/process_job';
+export * from './models/process_job_log';
 
 /**
  * Possible sync options for the database sync option
