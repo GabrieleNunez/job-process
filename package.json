@@ -9,14 +9,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/GabrieleNunez/job-process.git"
+    "url": "git+https://github.com/GabrieleNunez/process-cache.git"
   },
   "author": "Gabriele M. Nunez",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/GabrieleNunez/job-process/issues"
+    "url": "https://github.com/GabrieleNunez/process-cache/issues"
   },
-  "homepage": "https://github.com/GabrieleNunez/job-process#readme",
+  "homepage": "https://github.com/GabrieleNunez/process-cache#readme",
   "files": [
     "/dist",
     "/LICENSE",
