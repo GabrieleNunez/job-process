@@ -1,6 +1,6 @@
 # Process Cache
 
-This library is intended for to be utilized as a way to store data between processes/clusters/farms/etc. The idea is any data that is *"expensive"* to get ( any long running operations/calls to external rate limited apis)or is **valuable** and important to keep track of between process runs can be stored here in the database to be recovered or to be recalled at a later point. To put it extremly simply, this library is *primarily* intended for people who run cron jobs and need a way to save data either between executions or need some more advance logging capability. 
+To put it extremly simply, this library is ***primarily* intended** for people who run cron jobs and need a way to save data either between executions or need some more advance logging capability.
 
 ## Install
 ```bash
