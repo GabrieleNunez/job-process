@@ -1,5 +1,18 @@
 # Process Cache
 
+## Install
+```bash
+npm install process-cache
+```
+
+
+## Building
+```bash
+git clone https://github.com/GabrieleNunez/process-cache.git
+cd process-cache
+npm install
+npm run build
+```
 
 
 ## Setup
@@ -10,8 +23,9 @@ You must have some form of database driver installed. This library does not forc
 * [sqlite3](https://www.npmjs.com/package/sqlite3)
 * [node-postgres](https://www.npmjs.com/package/pg)
 
-Additionally you must have some way to synchronize the models to your database. Here is an example of how it looks to synchronize 
+Additionally you must have some way to synchronize the models to your database. Here is an example of how it looks to synchronize using TypeScript
 
+**sync.ts**
 ```typescript
 /** 
  * This script is only an example just so you can get the gist of how to set this up. 
